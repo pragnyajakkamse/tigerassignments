@@ -1,0 +1,137 @@
+
+
+# =============================
+# Import Libraries
+# =============================
+pip install pandas numpy openpyxl
+python analysis.py
+import pandas as pd
+import numpy as np
+import os
+from datetime import datetime
+
+
+# =============================
+# Setup
+# =============================
+DATA_PATH = "data/DS Internship - EDA - Data.xlsx"
+OUTPUT_DIR = "outputs"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# =============================
+# Load Data
+# =============================
+df = pd.read_excel(DATA_PATH, sheet_name="Data")
+df.columns = df.columns.str.strip()  # clean column names
+
+# =============================
+# 1. Initial Exploration
+# =============================
+
+# a. Total sales by year
+total_sales_by_year = df.groupby("Year")["Sales"].sum().reset_index()
+total_sales_by_year.to_csv(f"{OUTPUT_DIR}/total_sales_by_year.csv", index=False)
+
+# b. Number of stores opened in the year 1991
+stores_opened_1991 = df.loc[df["Open Year"] == 1991, "Store"].nunique()
+
+# c. Number of stores remodelled during this period (any remodel type)
+remodel_cols = [col for col in df.columns if "Remodel" in col or "Remd" in col]
+remodelled_stores = df.loc[df[remodel_cols].notna().any(axis=1), "Store"].nunique() if remodel_cols else 0
+
+# d. Relationship between Sales and total sq. ft
+corr_sales_sqft = df["Sales"].corr(df["Total Sq. Ft"])
+
+# e. Most profitable Super Division
+most_profitable_super = (
+    df.groupby("Super Division")["Sales"].mean().sort_values(ascending=False).idxmax()
+)
+
+# f. How many stores are active as of today
+today = datetime.now()
+if "Close Year" in df.columns:
+    active_stores = df.loc[(df["Close Year"].isna()) | (df["Close Year"] > today.year), "Store"].nunique()
+else:
+    active_stores = df["Store"].nunique()
+
+# g. Which super division has more sq. ft on average
+top_super_by_avg_sqft = (
+    df.groupby("Super Division")["Total Sq. Ft"].mean().sort_values(ascending=False).idxmax()
+)
+
+# =============================
+# 2. Advanced Insights
+# =============================
+
+# a. Top 3 potential candidate states for new stores
+state_stats = (
+    df.groupby("State")
+    .agg({
+        "Store": "nunique",
+        "Sales": "mean",
+        "Total Sq. Ft": "sum"
+    })
+    .rename(columns={
+        "Store": "distinct_stores",
+        "Sales": "avg_monthly_sales_per_store",
+        "Total Sq. Ft": "total_sqft"
+    })
+    .sort_values(by="avg_monthly_sales_per_store", ascending=False)
+)
+top3_states = state_stats.head(3)
+state_stats.to_csv(f"{OUTPUT_DIR}/state_stats.csv")
+
+# b. Best time of the year to consider opening a store
+if "Month" in df.columns:
+    avg_sales_by_month = df.groupby("Month")["Sales"].mean().reset_index()
+    best_month = int(avg_sales_by_month.loc[avg_sales_by_month["Sales"].idxmax(), "Month"])
+    avg_sales_by_month.to_csv(f"{OUTPUT_DIR}/avg_sales_by_month.csv", index=False)
+else:
+    best_month = 12  # assume December if month not in dataset
+
+# c. Outlet-type effects towards store closures
+if {"Outlet Type", "Close Year"}.issubset(df.columns):
+    outlet_closure_rates = (
+        df.groupby("Outlet Type")["Close Year"]
+        .apply(lambda x: x.notna().mean())
+        .reset_index(name="closure_rate")
+    )
+    outlet_closure_rates.to_csv(f"{OUTPUT_DIR}/closure_rates_by_outlet_type.csv", index=False)
+else:
+    outlet_closure_rates = pd.DataFrame(columns=["Outlet Type", "closure_rate"])
+
+# =============================
+# Save Summary of Key Answers
+# =============================
+summary = {
+    "Total_Sales_by_Year": total_sales_by_year.set_index("Year")["Sales"].to_dict(),
+    "Stores_Opened_in_1991": stores_opened_1991,
+    "Stores_Remodelled": remodelled_stores,
+    "Corr_Sales_SqFt": round(corr_sales_sqft, 3),
+    "Most_Profitable_Super": most_profitable_super,
+    "Active_Stores_as_of_Today": active_stores,
+    "Super_with_Highest_Avg_SqFt": top_super_by_avg_sqft,
+    "Top3_States": top3_states.index.tolist(),
+    "Best_Month_to_Open": best_month,
+}
+
+pd.DataFrame([summary]).to_csv(f"{OUTPUT_DIR}/summary_answers.csv", index=False)
+
+# =============================
+# Print Key Results
+# =============================
+print("=== INITIAL EXPLORATION ===")
+print("Total Sales by Year:\n", total_sales_by_year)
+print(f"\nStores opened in 1991: {stores_opened_1991}")
+print(f"Stores remodelled (any type): {remodelled_stores}")
+print(f"Correlation between Sales and Total SqFt: {corr_sales_sqft:.3f}")
+print(f"Most profitable Super Division: {most_profitable_super}")
+print(f"Active stores as of today: {active_stores}")
+print(f"Super division with highest avg sq. ft: {top_super_by_avg_sqft}")
+
+print("\n=== ADVANCED INSIGHTS ===")
+print("Top 3 candidate states:\n", top3_states)
+print(f"\nBest month to open a store: {best_month}")
+print("Outlet-type closure effects:\n", outlet_closure_rates)
+
+print(f"\nAll results saved in '{OUTPUT_DIR}/' folder.")
