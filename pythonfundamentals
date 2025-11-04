@@ -1,0 +1,346 @@
+import math
+import re
+
+# ----------------------------
+# Question 1
+# ----------------------------
+def q1_generate_2d_array():
+    x, y = map(int, input("Enter X,Y: ").split(","))
+    result = [[i * j for j in range(y)] for i in range(x)]
+    print(result)
+
+
+# ----------------------------
+# Question 2
+# ----------------------------
+def q2_sort_words():
+    words = input("Enter comma-separated words: ").split(",")
+    print(",".join(sorted(words)))
+
+
+# ----------------------------
+# Question 3
+# ----------------------------
+def q3_remove_duplicates_sort():
+    words = input("Enter whitespace-separated words: ").split()
+    print(" ".join(sorted(set(words))))
+
+
+# ----------------------------
+# Question 4
+# ----------------------------
+def q4_even_digit_numbers():
+    print(",".join([str(i) for i in range(1000, 3001) if all(int(ch) % 2 == 0 for ch in str(i))]))
+
+
+# ----------------------------
+# Question 5
+# ----------------------------
+def q5_letters_digits():
+    s = input("Enter sentence: ")
+    letters = sum(c.isalpha() for c in s)
+    digits = sum(c.isdigit() for c in s)
+    print(f"LETTERS {letters}\nDIGITS {digits}")
+
+
+# ----------------------------
+# Question 6
+# ----------------------------
+def q6_upper_lower():
+    s = input("Enter sentence: ")
+    upper = sum(c.isupper() for c in s)
+    lower = sum(c.islower() for c in s)
+    print(f"UPPER CASE {upper}\nLOWER CASE {lower}")
+
+
+# ----------------------------
+# Question 7
+# ----------------------------
+def q7_bank_transaction():
+    total = 0
+    while True:
+        try:
+            line = input()
+            if not line:
+                break
+            op, val = line.split()
+            val = int(val)
+            if op == "D":
+                total += val
+            elif op == "W":
+                total -= val
+        except EOFError:
+            break
+    print(total)
+
+
+# ----------------------------
+# Question 8
+# ----------------------------
+def q8_validate_passwords():
+    items = input("Enter passwords: ").split(",")
+    valid = []
+    for pwd in items:
+        if (6 <= len(pwd) <= 12 and
+            re.search("[a-z]", pwd) and
+            re.search("[0-9]", pwd) and
+            re.search("[A-Z]", pwd) and
+            re.search("[$#@]", pwd) and
+            not re.search("\s", pwd)):
+            valid.append(pwd)
+    print(",".join(valid))
+
+
+# ----------------------------
+# Question 9
+# ----------------------------
+def q9_sort_tuples():
+    entries = []
+    while True:
+        line = input()
+        if not line:
+            break
+        entries.append(tuple(line.split(",")))
+    print(sorted(entries, key=lambda x: (x[0], int(x[1]), int(x[2]))))
+
+
+# ----------------------------
+# Question 10
+# ----------------------------
+def q10_robot_distance():
+    x = y = 0
+    while True:
+        try:
+            line = input()
+            if not line:
+                break
+            direction, steps = line.split()
+            steps = int(steps)
+            if direction == "UP":
+                y += steps
+            elif direction == "DOWN":
+                y -= steps
+            elif direction == "LEFT":
+                x -= steps
+            elif direction == "RIGHT":
+                x += steps
+        except EOFError:
+            break
+    print(round(math.sqrt(x**2 + y**2)))
+
+
+# ----------------------------
+# Question 11
+# ----------------------------
+def q11_continuous_occurrences():
+    s = input("Enter string: ")
+    result = ""
+    count = 1
+    for i in range(len(s)):
+        if i < len(s) - 1 and s[i].lower() == s[i + 1].lower():
+            count += 1
+        else:
+            result += f"{s[i].lower()}{count}"
+            count = 1
+    print(result)
+
+
+# ----------------------------
+# Question 12
+# ----------------------------
+def q12_sum_between_9():
+    s = input("Enter string: ")
+    pairs = []
+    letters = [ch for ch in s if ch.isalpha()]
+    for i in range(len(letters)):
+        for j in range(i + 1, len(letters)):
+            substring = s[s.index(letters[i]) + 1:s.index(letters[j])]
+            nums = re.findall(r"\d+", substring)
+            if nums and sum(map(int, nums)) == 9:
+                pairs.append((letters[i], letters[j]))
+    for p in pairs:
+        print(",".join(p))
+
+
+# ----------------------------
+# Question 13
+# ----------------------------
+def q13_binary_pairs():
+    s = input("Enter binary string: ")
+    ones = [i for i, c in enumerate(s) if c == "1"]
+    n = len(ones)
+    print(n * (n - 1) // 2)
+
+
+# ----------------------------
+# Question 14
+# ----------------------------
+def q14_currency_denominations():
+    valid = list(map(int, input("Enter valid currencies: ").strip("[]").split(",")))
+    money = int(input("Enter amount: "))
+    valid.sort(reverse=True)
+    for denom in valid:
+        count = money // denom
+        if count > 0:
+            print(f"{denom}-{count}")
+            money %= denom
+
+
+# ----------------------------
+# Question 15
+# ----------------------------
+def q15_bus_stops():
+    from math import comb
+    n = int(input("Enter total stops: "))
+    m = int(input("Enter stops to make: "))
+    print(comb(n - m + 1, m))
+
+
+# ----------------------------
+# Question 16
+# ----------------------------
+def q16_stone_paper_scissor_cut():
+    scoreA = scoreB = 0
+    moves = ["stone", "paper", "scissor"]
+    rules = {"stone": "scissor", "paper": "stone", "scissor": "paper"}
+    while scoreA < 5 and scoreB < 5:
+        a = input("Player A: ").lower()
+        b = input("Player B: ").lower()
+        if a == b:
+            print("DRAW")
+        elif rules[a] == b:
+            print("Player A wins")
+            scoreA += 1
+        else:
+            print("Player B wins")
+            scoreB += 1
+    print("Game Over")
+
+
+# ----------------------------
+# Question 17
+# ----------------------------
+def q17_validate_email():
+    email = input("Enter email: ")
+    if (email.count("@") == 1 and
+        re.match("^[a-z0-9._]+@[a-z0-9]+\\.[a-z]+$", email)):
+        print("Valid email")
+    else:
+        print("Invalid email")
+
+
+# ----------------------------
+# Question 18
+# ----------------------------
+def q18_patterns():
+    n = int(input("Enter row count: "))
+    print("\nPattern 1:")
+    num = 1
+    for i in range(1, n + 1):
+        print(" * ".join(str(num + j) for j in range(i)))
+        num += i
+
+    print("\nPattern 2:")
+    for i in range(1, n + 1):
+        print(" " * (n - i) + "* " * i)
+    for i in range(n - 1, 0, -1):
+        print(" " * (n - i) + "* " * i)
+
+    print("\nPattern 3:")
+    num = 1
+    for i in range(1, n + 1):
+        print(" * ".join(str(num + j) for j in range(i)))
+        num += i
+    for i in range(n - 1, 0, -1):
+        num -= i
+        print(" * ".join(str(num + j) for j in range(i)))
+
+    print("\nPattern G:")
+    r = n
+    for i in range(r):
+        if i == 0:
+            print("  ***  ")
+        elif i in (r - 1, r // 2):
+            print(" * *** ")
+        elif i > r // 2:
+            print(" *    *")
+        else:
+            print(" *     ")
+
+
+# ----------------------------
+# Question 19
+# ----------------------------
+def q19_cyclic_rotation():
+    t = int(input("Enter type (1 or 2): "))
+    s = input("Enter string: ").strip("'\"")
+    times = int(input("Enter number of times: "))
+    for _ in range(times):
+        if t == 1:
+            s = s[1:] + s[0]
+        else:
+            s = s[-1] + s[:-1]
+        print(s)
+
+
+# ----------------------------
+# Question 20
+# ----------------------------
+def q20_health_report():
+    healthy = {"Sugar level":15, "Blood pressure":32, "Heartbeat rate":71, "weight":65, "fat percentage":10}
+    patient = {}
+    for key in healthy:
+        patient[key] = int(input(f"Enter {key}: "))
+    diff = {k: patient[k] - healthy[k] for k in healthy}
+    print(diff)
+    for k, v in diff.items():
+        status = "more" if v > 0 else "less"
+        print(f"{k} {abs(v)}")
+        print(f"{k} is {abs(v)} {status} than the ideal value\n")
+
+
+# ----------------------------
+# Question 21
+# ----------------------------
+def q21_armstrong():
+    num = int(input("Enter number: "))
+    digits = [int(d) for d in str(num)]
+    if sum(d**len(digits) for d in digits) == num:
+        print("Armstrong number")
+    else:
+        print("Not Armstrong number")
+
+
+# ----------------------------
+# Question 22
+# ----------------------------
+def q22_decimal_to_binary():
+    n = int(input("Enter decimal: "))
+    result = ""
+    while n > 0:
+        result = str(n % 2) + result
+        n //= 2
+    print(result or "0")
+
+
+# ----------------------------
+# Question 23
+# ----------------------------
+def q23_perfect_number():
+    n = int(input("Enter number: "))
+    divisors = [i for i in range(1, n) if n % i == 0]
+    if sum(divisors) == n:
+        print("Perfect number")
+    else:
+        print("Not a perfect number")
+
+
+# ==========================================================
+# Run Section (uncomment to test a specific question)
+# ==========================================================
+if __name__ == "__main__":
+    print("Python Fundamentals Solutions Loaded.")
+    # Example: Uncomment to run a question
+    # q1_generate_2d_array()
+    # q2_sort_words()
+    pass
