@@ -14,7 +14,7 @@ from datetime import datetime
 # =============================
 # Setup
 # =============================
-DATA_PATH = "data/DS Internship - EDA - Data.xlsx"
+DATA_PATH = "/Users/pragnyamrinalinijakkamsetti/Downloads/EDA - Assignments/Data/DS Internship - EDA - Data.xlsx"
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
