@@ -34,8 +34,7 @@ TARGET_COL = "Sales"   # as described: average monthly sales (2019)
 # -------------------------
 # Load data
 # -------------------------
-# If sheet name differs, this reads the first sheet
-df = pd.read_excel(DATA_PATH, sheet_name=0)
+df = pd.read_excel(/Users/pragnyamrinalinijakkamsetti/Downloads/Modeling - Assignments/Data/DS Internship - Modeling - Data.xlsx, sheet_name=0)
 df.columns = df.columns.str.strip()  # normalize
 
 # -------------------------
