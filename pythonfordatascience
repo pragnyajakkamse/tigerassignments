@@ -13,7 +13,7 @@ def find_col(df, candidates):
     return None
 
 # --- Sales ---
-sales = pd.read_excel("/mnt/data/SalesData.xlsx")
+sales = pd.read_excel("/Users/pragnyamrinalinijakkamsetti/Downloads/Python for Data Science - Assignments/Data/SalesData.xlsx")
 print("Sales columns:", list(sales.columns))
 item_col = find_col(sales, ["item","product"])
 sales_amount_col = find_col(sales, ["sale_amt","salesamount","sales amount","amount","sales","sale amount"])
@@ -73,9 +73,9 @@ mgr_sales.to_csv("/mnt/data/manager_percent_sales.csv", index=False)
 # --- IMDB ---
 # read with forgiving options to skip malformed lines
 try:
-    imdb = pd.read_csv("/mnt/data/imdb.csv", low_memory=False, on_bad_lines='skip', engine='python')
+    imdb = pd.read_csv("/Users/pragnyamrinalinijakkamsetti/Downloads/Python for Data Science - Assignments/Data/imdb.csv", low_memory=False, on_bad_lines='skip', engine='python')
 except Exception as e:
-    imdb = pd.read_csv("/mnt/data/imdb.csv", low_memory=False, on_bad_lines='skip')
+    imdb = pd.read_csv("/Users/pragnyamrinalinijakkamsetti/Downloads/Python for Data Science - Assignments/Data/data/imdb.csv", low_memory=False, on_bad_lines='skip')
 print("\\nImdb columns (sample):", list(imdb.columns)[:20])
 
 rating_col = find_col(imdb, ["imdb_rating","rating","imdbRating","imdb rating"])
@@ -115,7 +115,7 @@ imdb_sorted.to_csv("/mnt/data/imdb_sorted.csv", index=False)
 imdb_subset.to_csv("/mnt/data/imdb_30_180_min.csv", index=False)
 
 # --- Diamonds ---
-diamonds = pd.read_csv("/mnt/data/diamonds.csv")
+diamonds = pd.read_csv("/Users/pragnyamrinalinijakkamsetti/Downloads/Python for Data Science - Assignments/Data/diamonds.csv")
 print("\\nDiamonds columns sample:", list(diamonds.columns)[:20])
 dupe_count = diamonds.duplicated().sum()
 print("\\nTask 11 - duplicate rows:", dupe_count)
