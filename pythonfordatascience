@@ -1,0 +1,153 @@
+import pandas as pd
+import numpy as np
+
+def find_col(df, candidates):
+    cols = {c.lower(): c for c in df.columns}
+    for cand in candidates:
+        if cand.lower() in cols:
+            return cols[cand.lower()]
+    for cand in candidates:
+        for c in df.columns:
+            if cand.lower() in c.lower():
+                return c
+    return None
+
+# --- Sales ---
+sales = pd.read_excel("/mnt/data/SalesData.xlsx")
+print("Sales columns:", list(sales.columns))
+item_col = find_col(sales, ["item","product"])
+sales_amount_col = find_col(sales, ["sale_amt","salesamount","sales amount","amount","sales","sale amount"])
+price_col = find_col(sales, ["price","unitprice","unit price","unit_price"])
+date_col = find_col(sales, ["orderdate","order date","date","sale_date","sales_date"])
+region_col = find_col(sales, ["region","area"])
+manager_col = find_col(sales, ["manager"])
+salesman_col = find_col(sales, ["salesman","sales person","salesperson","seller","rep"])
+
+if sales_amount_col:
+    sales[sales_amount_col] = pd.to_numeric(sales[sales_amount_col].astype(str).str.replace('[$,]','', regex=True), errors='coerce')
+if price_col:
+    sales[price_col] = pd.to_numeric(sales[price_col].astype(str).str.replace('[$,]','', regex=True), errors='coerce')
+
+least_sale_per_item = sales.groupby(item_col)[sales_amount_col].min().reset_index().rename(columns={sales_amount_col:"least_sale"}) if item_col and sales_amount_col else pd.DataFrame()
+print("\\nTask 1 - least sale per item:")
+print(least_sale_per_item)
+
+if date_col:
+    sales['__date_parsed'] = pd.to_datetime(sales[date_col], errors='coerce')
+    sales['__year'] = sales['__date_parsed'].dt.year
+else:
+    sales['__year'] = None
+
+total_sales_year_region = sales.groupby(['__year', region_col])[sales_amount_col].sum().reset_index().rename(columns={sales_amount_col:"total_sales"}) if sales_amount_col and region_col else pd.DataFrame()
+print("\\nTask 2 - total sales by year and region:")
+print(total_sales_year_region)
+
+ref_date = pd.to_datetime("2025-11-04")
+sales['days_diff'] = (ref_date - sales['__date_parsed']).dt.days if date_col else np.nan
+print("\\nTask 3 - days_diff sample:")
+print(sales[[date_col, '__date_parsed', 'days_diff']].head())
+
+mgr_salesmen = sales.groupby(manager_col)[salesman_col].apply(lambda s: sorted(pd.Series(s.dropna().unique()).tolist())).reset_index().rename(columns={salesman_col:"list_of_salesmen"}) if manager_col and salesman_col else pd.DataFrame()
+print("\\nTask 4 - manager -> list_of_salesmen:")
+print(mgr_salesmen)
+
+region_stats = sales.groupby(region_col).agg(salesmen_count=(salesman_col, lambda s: s.dropna().nunique()), total_sales=(sales_amount_col, "sum")).reset_index() if region_col and salesman_col and sales_amount_col else pd.DataFrame()
+print("\\nTask 5 - region stats:")
+print(region_stats)
+
+if manager_col and sales_amount_col:
+    mgr_sales = sales.groupby(manager_col)[sales_amount_col].sum().reset_index().rename(columns={sales_amount_col:"total_sales"})
+    total_all = mgr_sales["total_sales"].sum()
+    mgr_sales['percent_sales'] = (mgr_sales['total_sales'] / total_all * 100).round(2) if total_all and total_all != 0 else 0
+else:
+    mgr_sales = pd.DataFrame()
+print("\\nTask 6 - manager percent sales:")
+print(mgr_sales)
+
+least_sale_per_item.to_csv("/mnt/data/least_sale_per_item.csv", index=False)
+total_sales_year_region.to_csv("/mnt/data/total_sales_year_region.csv", index=False)
+mgr_salesmen.to_csv("/mnt/data/manager_salesmen.csv", index=False)
+region_stats.to_csv("/mnt/data/region_stats.csv", index=False)
+mgr_sales.to_csv("/mnt/data/manager_percent_sales.csv", index=False)
+
+# --- IMDB ---
+# read with forgiving options to skip malformed lines
+try:
+    imdb = pd.read_csv("/mnt/data/imdb.csv", low_memory=False, on_bad_lines='skip', engine='python')
+except Exception as e:
+    imdb = pd.read_csv("/mnt/data/imdb.csv", low_memory=False, on_bad_lines='skip')
+print("\\nImdb columns (sample):", list(imdb.columns)[:20])
+
+rating_col = find_col(imdb, ["imdb_rating","rating","imdbRating","imdb rating"])
+title_col = find_col(imdb, ["title","name"])
+duration_col = find_col(imdb, ["duration","run_time","runtime","running_time"])
+release_col = find_col(imdb, ["release_date","released","year","release"])
+
+rating_fifth = imdb.iloc[4][rating_col] if rating_col and len(imdb) >= 5 else None
+print("\\nTask 7 - rating 5th:", rating_fifth)
+
+if duration_col and title_col:
+    imdb['__duration_secs'] = pd.to_numeric(imdb[duration_col], errors='coerce')
+    if imdb['__duration_secs'].notna().any():
+        shortest_title = imdb.loc[imdb['__duration_secs'].idxmin(), title_col]
+        longest_title = imdb.loc[imdb['__duration_secs'].idxmax(), title_col]
+    else:
+        shortest_title = longest_title = None
+else:
+    shortest_title = longest_title = None
+print("\\nTask 8 - shortest, longest:", shortest_title, longest_title)
+
+if release_col and rating_col:
+    imdb['__release_parsed'] = pd.to_datetime(imdb[release_col], errors='coerce')
+    imdb_sorted = imdb.sort_values(by=['__release_parsed', rating_col], ascending=[True, False])
+else:
+    imdb_sorted = imdb.copy()
+print("\\nTask 9 - imdb sorted (head):")
+cols_show = [c for c in [title_col, release_col, rating_col] if c is not None]
+print(imdb_sorted[cols_show].head())
+
+if duration_col:
+    imdb_subset = imdb[(imdb['__duration_secs'] >= 30*60) & (imdb['__duration_secs'] <= 180*60)].copy()
+else:
+    imdb_subset = pd.DataFrame()
+print("\\nTask 10 - imdb subset count:", len(imdb_subset))
+imdb_sorted.to_csv("/mnt/data/imdb_sorted.csv", index=False)
+imdb_subset.to_csv("/mnt/data/imdb_30_180_min.csv", index=False)
+
+# --- Diamonds ---
+diamonds = pd.read_csv("/mnt/data/diamonds.csv")
+print("\\nDiamonds columns sample:", list(diamonds.columns)[:20])
+dupe_count = diamonds.duplicated().sum()
+print("\\nTask 11 - duplicate rows:", dupe_count)
+
+carat_col = find_col(diamonds, ["carat"])
+cut_col = find_col(diamonds, ["cut"])
+diamonds_dropped = diamonds.dropna(subset=[carat_col, cut_col]) if carat_col and cut_col else diamonds.copy()
+print("\\nTask 12 - shape after drop:", diamonds_dropped.shape)
+
+diamonds_numeric = diamonds.select_dtypes(include=[np.number])
+print("\\nTask 13 - numeric columns:", list(diamonds_numeric.columns))
+
+x_col = find_col(diamonds, ["x"])
+y_col = find_col(diamonds, ["y"])
+z_col = find_col(diamonds, ["z"])
+depth_col = find_col(diamonds, ["depth"])
+if all([x_col,y_col,z_col,depth_col]):
+    diamonds['volume'] = np.where(pd.to_numeric(diamonds[depth_col], errors='coerce') > 60,
+                                  pd.to_numeric(diamonds[x_col], errors='coerce') * pd.to_numeric(diamonds[y_col], errors='coerce') * pd.to_numeric(diamonds[z_col], errors='coerce'),
+                                  8)
+else:
+    diamonds['volume'] = np.nan
+print("\\nTask 14 - volume sample:")
+print(diamonds[['volume']].head())
+
+price_col = find_col(diamonds, ["price"])
+if price_col:
+    mean_price = pd.to_numeric(diamonds[price_col], errors='coerce').mean()
+    diamonds[price_col] = pd.to_numeric(diamonds[price_col], errors='coerce').fillna(mean_price)
+else:
+    mean_price = None
+print("\\nTask 15 - mean price:", mean_price)
+
+diamonds.to_csv("/mnt/data/diamonds_processed.csv", index=False)
+diamonds_numeric.to_csv("/mnt/data/diamonds_numeric.csv", index=False)
